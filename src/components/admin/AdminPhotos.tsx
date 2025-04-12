@@ -1,13 +1,31 @@
 
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, Filter, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import FileUpload from './FileUpload';
 
 const AdminPhotos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isAddPhotoDialogOpen, setIsAddPhotoDialogOpen] = useState(false);
+  
+  // Form state
+  const [photoTitle, setPhotoTitle] = useState('');
+  const [photoCategory, setPhotoCategory] = useState('');
+  const [photoCity, setPhotoCity] = useState('');
+  const [photoState, setPhotoState] = useState('');
+  const [photoDescription, setPhotoDescription] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const [isCover, setIsCover] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   
   // Categorias disponíveis
   const categories = [
@@ -17,6 +35,20 @@ const AdminPhotos = () => {
     { id: 'hoteis', name: 'Hotéis e Pousadas', color: 'bg-purple-100 text-purple-800' },
     { id: 'pontos', name: 'Pontos Turísticos', color: 'bg-red-100 text-red-800' },
     { id: 'eventos', name: 'Eventos', color: 'bg-yellow-100 text-yellow-800' }
+  ];
+  
+  // Dados fictícios de estados e cidades
+  const states = [
+    { id: 'SC', name: 'Santa Catarina' },
+    { id: 'RJ', name: 'Rio de Janeiro' },
+    { id: 'SP', name: 'São Paulo' }
+  ];
+  
+  const cities = [
+    { id: '1', name: 'Florianópolis', stateId: 'SC' },
+    { id: '2', name: 'Balneário Camboriú', stateId: 'SC' },
+    { id: '3', name: 'Rio de Janeiro', stateId: 'RJ' },
+    { id: '4', name: 'São Paulo', stateId: 'SP' }
   ];
   
   // Dados fictícios de fotos
@@ -70,6 +102,40 @@ const AdminPhotos = () => {
     
     return matchesSearch && matchesCategory;
   });
+  
+  const handleAddPhoto = () => {
+    // Aqui você implementaria a lógica para adicionar a foto
+    console.log({
+      title: photoTitle,
+      category: photoCategory,
+      city: photoCity,
+      state: photoState,
+      description: photoDescription,
+      active: isActive,
+      isCover: isCover,
+      photoFile
+    });
+    
+    // Resetar formulário e fechar o modal
+    resetForm();
+    setIsAddPhotoDialogOpen(false);
+  };
+  
+  const resetForm = () => {
+    setPhotoTitle('');
+    setPhotoCategory('');
+    setPhotoCity('');
+    setPhotoState('');
+    setPhotoDescription('');
+    setIsActive(true);
+    setIsCover(false);
+    setPhotoFile(null);
+  };
+  
+  // Filtra as cidades baseado no estado selecionado
+  const filteredCities = photoState 
+    ? cities.filter(city => city.stateId === photoState)
+    : [];
 
   return (
     <div>
@@ -85,9 +151,125 @@ const AdminPhotos = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button className="bg-[#00B4D8] hover:bg-[#0095b3]">
-            <Plus size={16} className="mr-1" /> Adicionar Foto
-          </Button>
+          <Dialog open={isAddPhotoDialogOpen} onOpenChange={setIsAddPhotoDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#00B4D8] hover:bg-[#0095b3]">
+                <Plus size={16} className="mr-1" /> Adicionar Foto
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Adicionar Nova Foto</DialogTitle>
+              </DialogHeader>
+              
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="grid w-full items-center gap-1.5">
+                    <Label htmlFor="photo-title">Título da Foto</Label>
+                    <Input 
+                      id="photo-title" 
+                      placeholder="Digite o título da foto"
+                      value={photoTitle}
+                      onChange={(e) => setPhotoTitle(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid w-full items-center gap-1.5">
+                    <Label htmlFor="photo-category">Categoria</Label>
+                    <Select value={photoCategory} onValueChange={setPhotoCategory}>
+                      <SelectTrigger id="photo-category">
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid w-full items-center gap-1.5">
+                    <Label htmlFor="photo-state">Estado</Label>
+                    <Select value={photoState} onValueChange={setPhotoState}>
+                      <SelectTrigger id="photo-state">
+                        <SelectValue placeholder="Selecione um estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map(state => (
+                          <SelectItem key={state.id} value={state.id}>
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid w-full items-center gap-1.5">
+                  <Label htmlFor="photo-city">Cidade</Label>
+                  <Select value={photoCity} onValueChange={setPhotoCity} disabled={!photoState}>
+                    <SelectTrigger id="photo-city">
+                      <SelectValue placeholder={photoState ? "Selecione uma cidade" : "Selecione um estado primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredCities.map(city => (
+                        <SelectItem key={city.id} value={city.id}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid w-full items-center gap-1.5">
+                  <Label htmlFor="photo-description">Descrição</Label>
+                  <Textarea 
+                    id="photo-description" 
+                    placeholder="Digite uma descrição para a foto (opcional)"
+                    value={photoDescription}
+                    onChange={(e) => setPhotoDescription(e.target.value)}
+                  />
+                </div>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <FileUpload 
+                      id="photo-file" 
+                      label="Foto principal" 
+                      accept="image/jpeg,image/png,image/jpg" 
+                      onChange={setPhotoFile}
+                      value={photoFile}
+                    />
+                  </CardContent>
+                </Card>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch id="photo-active" checked={isActive} onCheckedChange={setIsActive} />
+                    <Label htmlFor="photo-active">Ativa</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch id="photo-cover" checked={isCover} onCheckedChange={setIsCover} />
+                    <Label htmlFor="photo-cover">Imagem de Capa</Label>
+                  </div>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">Cancelar</Button>
+                </DialogClose>
+                <Button type="button" className="bg-[#00B4D8] hover:bg-[#0095b3]" onClick={handleAddPhoto}>
+                  Salvar Foto
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       

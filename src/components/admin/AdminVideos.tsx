@@ -1,14 +1,33 @@
 
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, Filter, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import FileUpload from './FileUpload';
 
 const AdminVideos = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isAddVideoDialogOpen, setIsAddVideoDialogOpen] = useState(false);
+  
+  // Form state
+  const [videoTitle, setVideoTitle] = useState('');
+  const [videoCategory, setVideoCategory] = useState('');
+  const [videoCity, setVideoCity] = useState('');
+  const [videoState, setVideoState] = useState('');
+  const [whatsappLink, setWhatsappLink] = useState('');
+  const [instagramLink, setInstagramLink] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   
   // Categorias disponíveis
   const categories = [
@@ -18,6 +37,20 @@ const AdminVideos = () => {
     { id: 'hoteis', name: 'Hotéis e Pousadas', color: 'bg-purple-100 text-purple-800' },
     { id: 'pontos', name: 'Pontos Turísticos', color: 'bg-red-100 text-red-800' },
     { id: 'eventos', name: 'Eventos', color: 'bg-yellow-100 text-yellow-800' }
+  ];
+  
+  // Dados fictícios de estados e cidades
+  const states = [
+    { id: 'SC', name: 'Santa Catarina' },
+    { id: 'RJ', name: 'Rio de Janeiro' },
+    { id: 'SP', name: 'São Paulo' }
+  ];
+  
+  const cities = [
+    { id: '1', name: 'Florianópolis', stateId: 'SC' },
+    { id: '2', name: 'Balneário Camboriú', stateId: 'SC' },
+    { id: '3', name: 'Rio de Janeiro', stateId: 'RJ' },
+    { id: '4', name: 'São Paulo', stateId: 'SP' }
   ];
   
   // Dados fictícios de vídeos
@@ -78,6 +111,44 @@ const AdminVideos = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const handleAddVideo = () => {
+    // Aqui você implementaria a lógica para adicionar o vídeo
+    console.log({
+      title: videoTitle,
+      category: videoCategory,
+      city: videoCity,
+      state: videoState,
+      whatsappLink,
+      instagramLink,
+      active: isActive,
+      featured: isFeatured,
+      videoFile,
+      thumbnailFile
+    });
+    
+    // Resetar formulário e fechar o modal
+    resetForm();
+    setIsAddVideoDialogOpen(false);
+  };
+  
+  const resetForm = () => {
+    setVideoTitle('');
+    setVideoCategory('');
+    setVideoCity('');
+    setVideoState('');
+    setWhatsappLink('');
+    setInstagramLink('');
+    setIsActive(true);
+    setIsFeatured(false);
+    setVideoFile(null);
+    setThumbnailFile(null);
+  };
+  
+  // Filtra as cidades baseado no estado selecionado
+  const filteredCities = videoState 
+    ? cities.filter(city => city.stateId === videoState)
+    : [];
+
   return (
     <div>
       <div className="flex flex-col md:flex-row justify-between mb-6">
@@ -92,9 +163,148 @@ const AdminVideos = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button className="bg-[#00B4D8] hover:bg-[#0095b3]">
-            <Plus size={16} className="mr-1" /> Adicionar Vídeo
-          </Button>
+          <Dialog open={isAddVideoDialogOpen} onOpenChange={setIsAddVideoDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#00B4D8] hover:bg-[#0095b3]">
+                <Plus size={16} className="mr-1" /> Adicionar Vídeo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Adicionar Novo Vídeo</DialogTitle>
+              </DialogHeader>
+              
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="grid w-full items-center gap-1.5">
+                    <Label htmlFor="video-title">Título do Vídeo</Label>
+                    <Input 
+                      id="video-title" 
+                      placeholder="Digite o título do vídeo"
+                      value={videoTitle}
+                      onChange={(e) => setVideoTitle(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid w-full items-center gap-1.5">
+                    <Label htmlFor="video-category">Categoria</Label>
+                    <Select value={videoCategory} onValueChange={setVideoCategory}>
+                      <SelectTrigger id="video-category">
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid w-full items-center gap-1.5">
+                    <Label htmlFor="video-state">Estado</Label>
+                    <Select value={videoState} onValueChange={setVideoState}>
+                      <SelectTrigger id="video-state">
+                        <SelectValue placeholder="Selecione um estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map(state => (
+                          <SelectItem key={state.id} value={state.id}>
+                            {state.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid w-full items-center gap-1.5">
+                  <Label htmlFor="video-city">Cidade</Label>
+                  <Select value={videoCity} onValueChange={setVideoCity} disabled={!videoState}>
+                    <SelectTrigger id="video-city">
+                      <SelectValue placeholder={videoState ? "Selecione uma cidade" : "Selecione um estado primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredCities.map(city => (
+                        <SelectItem key={city.id} value={city.id}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid w-full items-center gap-1.5">
+                    <Label htmlFor="video-whatsapp">Link do WhatsApp</Label>
+                    <Input 
+                      id="video-whatsapp" 
+                      placeholder="https://wa.me/5548999999999"
+                      value={whatsappLink}
+                      onChange={(e) => setWhatsappLink(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="grid w-full items-center gap-1.5">
+                    <Label htmlFor="video-instagram">Link do Instagram</Label>
+                    <Input 
+                      id="video-instagram" 
+                      placeholder="https://instagram.com/local"
+                      value={instagramLink}
+                      onChange={(e) => setInstagramLink(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FileUpload 
+                        id="video-file" 
+                        label="Arquivo de vídeo" 
+                        accept="video/mp4,video/quicktime,video/x-m4v" 
+                        maxSizeMB={200}
+                        onChange={setVideoFile}
+                        value={videoFile}
+                      />
+                      
+                      <FileUpload 
+                        id="thumbnail-file" 
+                        label="Imagem de capa do vídeo" 
+                        accept="image/jpeg,image/png,image/jpg" 
+                        onChange={setThumbnailFile}
+                        value={thumbnailFile}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch id="video-active" checked={isActive} onCheckedChange={setIsActive} />
+                    <Label htmlFor="video-active">Ativo</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch id="video-featured" checked={isFeatured} onCheckedChange={setIsFeatured} />
+                    <Label htmlFor="video-featured">Destaque</Label>
+                  </div>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="outline">Cancelar</Button>
+                </DialogClose>
+                <Button type="button" className="bg-[#00B4D8] hover:bg-[#0095b3]" onClick={handleAddVideo}>
+                  Salvar Vídeo
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       
