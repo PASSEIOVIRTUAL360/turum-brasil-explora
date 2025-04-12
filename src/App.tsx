@@ -9,6 +9,7 @@ import CityPage from "./pages/CityPage";
 import VideoFeed from "./pages/VideoFeed";
 import MyItinerary from "./pages/MyItinerary";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/cidade/:cityId" element={<CityPage />} />
           <Route path="/cidade/:cityId/categoria/:categorySlug" element={<VideoFeed />} />
           <Route path="/itinerary" element={<MyItinerary />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
