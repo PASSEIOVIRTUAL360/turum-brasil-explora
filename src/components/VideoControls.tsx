@@ -1,20 +1,28 @@
 
 import React from 'react';
-import { Play, Pause, Bookmark, Calendar, Instagram, Phone } from 'lucide-react';
+import { Play, Pause, Bookmark, Calendar, Instagram, Phone, Volume2, VolumeX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VideoControlsProps {
   isPlaying: boolean;
   togglePlay: () => void;
+  isMuted: boolean;
+  toggleMute: () => void;
   progress: number;
   visible: boolean;
+  onNextVideo?: () => void;
+  onPreviousVideo?: () => void;
 }
 
 const VideoControls: React.FC<VideoControlsProps> = ({
   isPlaying,
   togglePlay,
+  isMuted,
+  toggleMute,
   progress,
-  visible
+  visible,
+  onNextVideo,
+  onPreviousVideo
 }) => {
   return (
     <div 
@@ -48,6 +56,15 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 
       {/* Action buttons */}
       <div className="z-20 px-4 pb-8 flex justify-around">
+        <button 
+          className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-full p-2.5 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleMute();
+          }}
+        >
+          {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+        </button>
         <button className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-full p-2.5 transition-colors">
           <Bookmark size={20} />
         </button>

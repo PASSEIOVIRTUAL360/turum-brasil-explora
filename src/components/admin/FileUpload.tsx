@@ -2,7 +2,7 @@
 import React, { useState, ChangeEvent, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Upload, X, File, Video, Image360 } from 'lucide-react';
+import { Upload, X, File, Video, Compass } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 interface FileUploadProps {
@@ -174,10 +174,7 @@ const FileUpload = ({
             {isVideo ? (
               <Video size={20} className="mr-2 text-coral" />
             ) : is360Image ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-turquesa">
-                <circle cx="12" cy="12" r="10" />
-                <text x="5" y="16" fontSize="8" fontWeight="bold">360°</text>
-              </svg>
+              <Compass size={20} className="mr-2 text-turquesa" />
             ) : (
               <File size={20} className="mr-2 text-blue-500" />
             )}
