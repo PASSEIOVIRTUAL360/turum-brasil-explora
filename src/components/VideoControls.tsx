@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Play, Pause, Bookmark, Calendar, Instagram, Phone, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Bookmark, Calendar, Instagram, Phone, Volume2, VolumeX, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VideoControlsProps {
@@ -31,6 +31,22 @@ const VideoControls: React.FC<VideoControlsProps> = ({
         visible ? "opacity-100" : "opacity-0 pointer-events-none"
       )}
     >
+      {/* Navigation buttons for next/previous */}
+      {onPreviousVideo && (
+        <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreviousVideo();
+            }}
+            className="bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-colors"
+          >
+            <ChevronUp size={24} />
+            <span className="sr-only">Vídeo anterior</span>
+          </button>
+        </div>
+      )}
+
       {/* Play/Pause button in center */}
       <div className="flex-1 flex items-center justify-center">
         <button
@@ -43,6 +59,22 @@ const VideoControls: React.FC<VideoControlsProps> = ({
           {isPlaying ? <Pause size={24} /> : <Play size={24} />}
         </button>
       </div>
+
+      {/* Next video button */}
+      {onNextVideo && (
+        <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onNextVideo();
+            }}
+            className="bg-black/30 hover:bg-black/50 text-white rounded-full p-2 transition-colors"
+          >
+            <ChevronDown size={24} />
+            <span className="sr-only">Próximo vídeo</span>
+          </button>
+        </div>
+      )}
 
       {/* Progress bar */}
       <div className="w-full px-4 mb-1">
