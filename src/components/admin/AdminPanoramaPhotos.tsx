@@ -59,6 +59,7 @@ const AdminPanoramaPhotos = () => {
       city: 'Joinville', 
       state: 'Santa Catarina',
       panoramaUrl: '/joinville360.jpg',
+      thumbnailUrl: '/joinville-thumb.jpg',
       externalTourUrl: 'https://example.com/tour/mirante',
       active: true,
       createdAt: '2023-11-10'
@@ -70,6 +71,7 @@ const AdminPanoramaPhotos = () => {
       city: 'Rio de Janeiro', 
       state: 'Rio de Janeiro',
       panoramaUrl: '/copa360.jpg',
+      thumbnailUrl: '/copa-thumb.jpg',
       externalTourUrl: null,
       active: true,
       createdAt: '2023-10-15'
@@ -81,6 +83,7 @@ const AdminPanoramaPhotos = () => {
       city: 'São Paulo', 
       state: 'São Paulo',
       panoramaUrl: '/hotel360.jpg',
+      thumbnailUrl: '/hotel-thumb.jpg',
       externalTourUrl: 'https://example.com/tour/majestic',
       active: false,
       createdAt: '2023-09-22'
@@ -307,8 +310,15 @@ const AdminPanoramaPhotos = () => {
               <div key={panorama.id} className="bg-white border rounded-lg overflow-hidden shadow-sm">
                 <div className="aspect-w-16 aspect-h-9 bg-gray-200 relative">
                   <div className="w-full h-40 bg-gray-300 flex items-center justify-center">
-                    {/* Substituir por uma imagem real quando disponível */}
-                    <span className="text-gray-500">Imagem 360°</span>
+                    {panorama.thumbnailUrl ? (
+                      <img 
+                        src={panorama.thumbnailUrl} 
+                        alt={panorama.title} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-500">Imagem 360°</span>
+                    )}
                   </div>
                   <div className="absolute top-2 right-2">
                     <Badge className="bg-[#003049]">

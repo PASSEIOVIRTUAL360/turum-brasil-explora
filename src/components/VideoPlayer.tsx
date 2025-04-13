@@ -8,6 +8,10 @@ interface VideoPlayerProps {
   location: string;
   poster?: string;
   onNext?: () => void;
+  onPrevious?: () => void;
+  autoplay?: boolean;
+  muted?: boolean;
+  loop?: boolean;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -15,12 +19,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   title,
   location,
   poster,
-  onNext
+  onNext,
+  onPrevious,
+  autoplay = true,
+  muted = true,
+  loop = true
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(autoplay);
   const [progress, setProgress] = useState(0);
   const [showControls, setShowControls] = useState(false);
+  const [isMuted, setIsMuted] = useState(muted);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const controlsTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Iniciar o vídeo quando carregado
   useEffect(() => {
@@ -31,18 +41,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     video.currentTime = 0;
     setProgress(0);
     
+    // Apply muted state
+    video.muted = isMuted;
+    
     // Autoplay on mount or when video changes
-    const playVideo = async () => {
-      try {
-        await video.play();
-        setIsPlaying(true);
-      } catch (error) {
-        console.log('Autoplay prevented:', error);
-        setIsPlaying(false);
-      }
-    };
-
-    playVideo();
+    if (autoplay) {
+      const playVideo = async () => {
+        try {
+          await video.play();
+          setIsPlaying(true);
+        } catch (error) {
+          console.log('Autoplay prevented:', error);
+          setIsPlaying(false);
+        }
+      };
+      
+      playVideo();
+    }
 
     // Update progress
     const updateProgress = () => {
@@ -55,9 +70,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     // Handle end of video
     const handleVideoEnd = () => {
-      if (onNext) {
+      if (onNext && !loop) {
         onNext();
-      } else {
+      } else if (loop) {
         video.currentTime = 0;
         video.play();
       }
@@ -68,8 +83,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     return () => {
       video.removeEventListener('timeupdate', updateProgress);
       video.removeEventListener('ended', handleVideoEnd);
+      if (controlsTimerRef.current) {
+        clearTimeout(controlsTimerRef.current);
+      }
     };
-  }, [videoUrl, onNext]);
+  }, [videoUrl, onNext, autoplay, loop, isMuted]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -83,23 +101,76 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     setIsPlaying(!isPlaying);
   };
 
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    video.muted = !isMuted;
+    setIsMuted(!isMuted);
+  };
+
   const handleTouch = () => {
-    togglePlay();
+    // Toggle controls visibility on touch/click
     setShowControls(true);
     
     // Hide controls after delay
-    setTimeout(() => {
+    if (controlsTimerRef.current) {
+      clearTimeout(controlsTimerRef.current);
+    }
+    
+    controlsTimerRef.current = setTimeout(() => {
       setShowControls(false);
     }, 3000);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Track touch start for swipe detection
+    const touchY = e.touches[0].clientY;
+    let startY = touchY;
+    let touchStartTime = Date.now();
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const currentY = e.touches[0].clientY;
+      const deltaY = startY - currentY;
+      const touchTime = Date.now() - touchStartTime;
+      
+      // Check if it's a fast vertical swipe (up or down)
+      if (Math.abs(deltaY) > 50 && touchTime < 300) {
+        if (deltaY > 0 && onNext) {
+          // Swipe up - next video
+          onNext();
+        } else if (deltaY < 0 && onPrevious) {
+          // Swipe down - previous video
+          onPrevious();
+        }
+        
+        // Clean up event listeners
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+
+    // Add temporary listeners for this touch interaction
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+
   return (
-    <div className="relative w-full h-full" onClick={handleTouch}>
+    <div 
+      className="relative w-full h-full" 
+      onClick={handleTouch}
+      onTouchStart={handleTouchStart}
+    >
       <video
         ref={videoRef}
         src={videoUrl}
         poster={poster}
-        loop={!onNext}
+        loop={loop && !onNext}
         playsInline
         className="w-full h-full object-cover"
       />
@@ -112,8 +183,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       <VideoControls
         isPlaying={isPlaying}
         togglePlay={togglePlay}
+        isMuted={isMuted}
+        toggleMute={toggleMute}
         progress={progress}
         visible={showControls}
+        onNextVideo={onNext}
+        onPreviousVideo={onPrevious}
       />
     </div>
   );

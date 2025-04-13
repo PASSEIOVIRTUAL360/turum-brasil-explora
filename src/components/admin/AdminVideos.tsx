@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Eye, EyeOff, Video } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
@@ -11,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import FileUpload from './FileUpload';
+import { Textarea } from '@/components/ui/textarea';
 
 const AdminVideos = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +28,7 @@ const AdminVideos = () => {
   const [isFeatured, setIsFeatured] = useState(false);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [videoDescription, setVideoDescription] = useState('');
   
   // Categorias disponíveis
   const categories = [
@@ -142,6 +143,7 @@ const AdminVideos = () => {
     setIsFeatured(false);
     setVideoFile(null);
     setThumbnailFile(null);
+      setVideoDescription('');
   };
   
   // Filtra as cidades baseado no estado selecionado
@@ -293,6 +295,17 @@ const AdminVideos = () => {
                     <Label htmlFor="video-featured">Destaque</Label>
                   </div>
                 </div>
+
+                <div className="grid w-full items-center gap-1.5">
+                  <Label htmlFor="video-description">Descrição</Label>
+                  <Textarea 
+                    id="video-description" 
+                    placeholder="Digite uma breve descrição do vídeo"
+                    rows={3}
+                    value={videoDescription}
+                    onChange={(e) => setVideoDescription(e.target.value)}
+                  />
+                </div>
               </div>
               
               <DialogFooter>
@@ -355,8 +368,17 @@ const AdminVideos = () => {
                     <TableCell className="font-medium">
                       <div className="flex items-start">
                         <div className="w-12 h-12 rounded overflow-hidden mr-3 bg-gray-200 flex-shrink-0">
-                          {/* Substituir por uma imagem real quando disponível */}
-                          <div className="w-full h-full bg-gray-300"></div>
+                          {video.thumbnailUrl ? (
+                            <img 
+                              src={video.thumbnailUrl} 
+                              alt={video.title}
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                              <Video size={18} className="text-gray-500" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           {video.title}

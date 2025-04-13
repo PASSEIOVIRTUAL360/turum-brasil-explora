@@ -2,7 +2,7 @@
 import React, { useState, ChangeEvent, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Upload, X, File } from 'lucide-react';
+import { Upload, X, File, Video, Image360 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 interface FileUploadProps {
@@ -13,6 +13,7 @@ interface FileUploadProps {
   onChange: (file: File | null) => void;
   value?: File | null;
   className?: string;
+  showPreview?: boolean;
 }
 
 const FileUpload = ({
@@ -23,10 +24,14 @@ const FileUpload = ({
   onChange,
   value,
   className,
+  showPreview = true,
 }: FileUploadProps) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [isVideo, setIsVideo] = useState(false);
+  const [is360Image, setIs360Image] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
   // Função para converter MB para bytes
@@ -38,6 +43,8 @@ const FileUpload = ({
       onChange(null);
       setPreview(null);
       setFileName(null);
+      setIsVideo(false);
+      setIs360Image(false);
       return;
     }
 
@@ -52,6 +59,10 @@ const FileUpload = ({
       return;
     }
 
+    // Determinar tipo de arquivo
+    setIsVideo(file.type.startsWith('video/'));
+    setIs360Image(checkIf360Image(file.name));
+
     // Preview para imagens
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -60,31 +71,46 @@ const FileUpload = ({
       };
       reader.readAsDataURL(file);
     } else if (file.type.startsWith('video/')) {
-      // Para vídeos, apenas mostramos o nome do arquivo
-      setPreview(null);
+      // Para vídeos, criamos um URL temporário para preview
+      const videoUrl = URL.createObjectURL(file);
+      setPreview(videoUrl);
     }
 
     setFileName(file.name);
     onChange(file);
   };
 
+  // Função heurística para determinar se é uma imagem 360° baseado no nome ou metadados
+  // Em uma implementação completa, seria necessário analisar os metadados EXIF
+  const checkIf360Image = (filename: string): boolean => {
+    const lowerName = filename.toLowerCase();
+    return lowerName.includes('360') || 
+           lowerName.includes('panorama') || 
+           lowerName.includes('spherical') ||
+           lowerName.includes('pano');
+  };
+
   const clearFile = () => {
+    if (preview && isVideo) {
+      URL.revokeObjectURL(preview);
+    }
     onChange(null);
     setPreview(null);
     setFileName(null);
+    setIsVideo(false);
+    setIs360Image(false);
     if (inputRef.current) {
       inputRef.current.value = '';
     }
   };
-
-  const isVideo = accept.includes('video/');
-  const isImage = accept.includes('image/');
 
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex items-center justify-between">
         <label htmlFor={id} className="text-sm font-medium">
           {label}
+          {is360Image && <span className="ml-2 text-turquesa">🌀 360°</span>}
+          {isVideo && <span className="ml-2 text-coral">🎥 Vídeo</span>}
         </label>
         {fileName && (
           <Button
@@ -107,28 +133,56 @@ const FileUpload = ({
           </p>
           <p className="text-xs text-gray-400 mt-1">
             {isVideo 
-              ? `MP4, até ${maxSizeMB}MB` 
-              : isImage 
-                ? 'JPG, PNG' 
+              ? `MP4, MOV, até ${maxSizeMB}MB` 
+              : accept.includes('image/') 
+                ? (accept.includes('360') ? 'Imagem 360° (JPG, PNG)' : 'JPG, PNG, WEBP') 
                 : 'Arquivo'}
           </p>
         </div>
       ) : (
-        <div className="border rounded-md p-2">
-          {preview && isImage ? (
-            <div className="relative aspect-video w-full flex items-center justify-center overflow-hidden rounded bg-muted">
-              <img 
-                src={preview} 
-                alt="Preview" 
-                className="object-cover max-h-[200px] rounded"
-              />
-            </div>
-          ) : (
-            <div className="flex items-center p-2">
-              <File size={20} className="mr-2 text-blue-500" />
-              <span className="text-sm truncate max-w-[250px]">{fileName}</span>
-            </div>
+        <div className="border rounded-md overflow-hidden">
+          {showPreview && (
+            <>
+              {preview && isVideo ? (
+                <div className="relative aspect-video w-full flex items-center justify-center bg-black">
+                  <video 
+                    ref={videoRef}
+                    src={preview} 
+                    controls
+                    className="max-h-[200px] max-w-full"
+                  />
+                </div>
+              ) : preview && !isVideo ? (
+                <div className={`relative ${is360Image ? 'aspect-square' : 'aspect-video'} w-full flex items-center justify-center overflow-hidden rounded-t bg-muted`}>
+                  <img 
+                    src={preview} 
+                    alt="Preview" 
+                    className={`object-cover max-h-[200px] w-full ${is360Image ? 'cursor-move' : ''}`}
+                  />
+                  {is360Image && (
+                    <div className="absolute bottom-2 right-2">
+                      <Button size="sm" className="bg-[#00B4D8] hover:bg-[#0095b3]">
+                        Visualizar em 360°
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </>
           )}
+          <div className="flex items-center p-3">
+            {isVideo ? (
+              <Video size={20} className="mr-2 text-coral" />
+            ) : is360Image ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2 text-turquesa">
+                <circle cx="12" cy="12" r="10" />
+                <text x="5" y="16" fontSize="8" fontWeight="bold">360°</text>
+              </svg>
+            ) : (
+              <File size={20} className="mr-2 text-blue-500" />
+            )}
+            <span className="text-sm truncate max-w-[250px]">{fileName}</span>
+          </div>
         </div>
       )}
 
